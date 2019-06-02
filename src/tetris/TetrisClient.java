@@ -5,6 +5,7 @@ import com.esotericsoftware.kryonet.Connection;
 import tetris.packets.*;
 import util.engine.Engine;
 import util.engine.Input;
+import util.engine.Time;
 import util.engine.networking.NetworkAdapter;
 import util.engine.networking.client.ClientNetManager;
 import util.engine.networking.packets.PlayerSuccessfullyJoinedPacket;
@@ -35,12 +36,15 @@ public class TetrisClient extends NetworkAdapter
 	}
 
 	private HashMap<Integer, Board> boards;
+	private float lerpTime;
+
 	private boolean gameStarted = false;
 
 
 	public TetrisClient()
 	{
 		boards = new HashMap<>();
+		lerpTime = 0f;
 	}
 
 
@@ -72,10 +76,22 @@ public class TetrisClient extends NetworkAdapter
 			SetShapePositionPacket positionPacket = (SetShapePositionPacket)packet;
 
 			boards.get(positionPacket.connectionID).getCurrentShape().setPosition(positionPacket.getPosition(), true);
+
+			if (positionPacket.connectionID == ((ClientNetManager)Engine.network()).id())
+			{
+				lerpTime = 0f;
+			}
 		}
 		else if (packet instanceof RotateShapePacket)
 		{
-			boards.get(((RotateShapePacket) packet).connectionID).getCurrentShape().rotate(true);
+			RotateShapePacket rotatePacket = (RotateShapePacket)packet;
+
+			boards.get(rotatePacket.connectionID).getCurrentShape().rotate(true);
+
+			if (rotatePacket.connectionID == ((ClientNetManager)Engine.network()).id())
+			{
+				lerpTime = 0f;
+			}
 		}
 		else if (packet instanceof LockCurrentShapePacket)
 		{
@@ -114,7 +130,14 @@ public class TetrisClient extends NetworkAdapter
 		}
 		else if (packet instanceof NextShapePacket)
 		{
-			boards.get(((NextShapePacket) packet).connectionID).setNextShape();
+			NextShapePacket shapePacket = (NextShapePacket)packet;
+
+			boards.get(shapePacket.connectionID).setNextShape();
+
+			if (shapePacket.connectionID == ((ClientNetManager)Engine.network()).id())
+			{
+				lerpTime = 0f;
+			}
 		}
 		else if (packet instanceof PlayerWonPacket)
 		{
@@ -142,7 +165,7 @@ public class TetrisClient extends NetworkAdapter
 			myBoard.grid().draw(buffer, blockSize);
 			if (myBoard.getCurrentShape() != null && !myBoard.hasLost())
 			{
-				myBoard.getCurrentShape().draw(buffer, blockSize, 1);
+				myBoard.getCurrentShape().draw(buffer, blockSize, (lerpTime / ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME));
 			}
 			myBoard.drawQueue(buffer, 40, Vec2.right().scale(-40));
 
@@ -219,6 +242,16 @@ public class TetrisClient extends NetworkAdapter
 		if (Input.getButtonUp(KeyEvent.VK_DOWN) || Input.getButtonDown(KeyEvent.VK_DOWN))
 		{
 			((ClientNetManager)Engine.network()).sendReliable(new InputPacket(TetrisInput.Down, Input.getButtonDown(KeyEvent.VK_DOWN)));
+		}
+
+		Board myBoard = boards.get(((ClientNetManager)Engine.network()).id());
+		if (myBoard != null && myBoard.getCurrentShape() != null && myBoard.getCurrentShape().canMove(Vec2.up()))
+		{
+			lerpTime = 0f;
+		}
+		else
+		{
+			lerpTime += Time.deltaTime(true);
 		}
 	}
 }

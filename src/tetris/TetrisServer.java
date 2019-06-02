@@ -253,7 +253,7 @@ public class TetrisServer extends NetworkAdapter
 
 			if (didMove)
 			{
-				((ServerNetManager)Engine.network()).sendReliable(new SetShapePositionPacket(entry.getKey(), board.getCurrentShape().getPosition()));
+				((ServerNetManager)Engine.network()).sendUnreliable(new SetShapePositionPacket(entry.getKey(), board.getCurrentShape().getPosition()));
 			}
 		}
 

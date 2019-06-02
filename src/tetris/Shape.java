@@ -74,7 +74,7 @@ public class Shape
 
 	public void draw(Graphics2D buffer, int blockSize, float lerp, Vec2 offset)
 	{
-		buffer.setColor(ColorUtil.lerp(color, new Color(0xD4B22A), lerp));
+		buffer.setColor(ColorUtil.lerp(color, Color.WHITE, lerp));
 		for (Vec2 p : points)
 		{
 			buffer.fillRect((p.x + position.x) * blockSize + offset.x, (p.y + position.y) * blockSize + offset.y, blockSize, blockSize);
@@ -105,7 +105,7 @@ public class Shape
 			centerOffset = new Vec2f(min.x + ((max.x - min.x) / 2f), min.y + ((max.y - min.y) / 2f));
 		}
 
-		buffer.setColor(ColorUtil.lerp(color, new Color(0xD4B22A), lerp));
+		buffer.setColor(ColorUtil.lerp(color, Color.WHITE, lerp));
 		for (Vec2 p : points)
 		{
 			buffer.fillRect((int)((p.x - centerOffset.x) * blockSize) + position.x , (int)((p.y - centerOffset.y) * blockSize) + position.y, blockSize, blockSize);
@@ -114,6 +114,18 @@ public class Shape
 
 
 	public boolean move(Vec2 dir)
+	{
+		if (canMove(dir))
+		{
+			position = position.add(dir);
+			return true;
+		}
+
+		return false;
+	}
+
+
+	public boolean canMove(Vec2 dir)
 	{
 		for (Vec2 p : points)
 		{
@@ -130,7 +142,6 @@ public class Shape
 			}
 		}
 
-		position = position.add(dir);
 		return true;
 	}
 

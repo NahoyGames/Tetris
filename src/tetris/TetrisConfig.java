@@ -10,7 +10,7 @@ import java.awt.*;
 
 public class TetrisConfig extends EngineConfig
 {
-	public float SHAPE_LOCK_TIME = 1f;
+	public float SHAPE_LOCK_TIME = 0.75f;
 	public int SHAPE_QUEUE_SIZE = 5;
 	public Font TETRIS_FONT;
 
