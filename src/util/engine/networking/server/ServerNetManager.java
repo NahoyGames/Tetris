@@ -140,7 +140,7 @@ public class ServerNetManager extends GenericNetManager
 			// Notify listeners
 			for (INetworkListener listener : listeners)
 			{
-				listener.onPlayerJoin(sender.getID(), successfulJoin);
+				listener.onPlayerJoin(sender.getID(), requestPacket.username, successfulJoin);
 			}
 
 			// Notify everyone

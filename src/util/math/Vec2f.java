@@ -125,6 +125,9 @@ public class Vec2f
 	}
 
 
+	public Vec2 rounded() { return new Vec2(Math.round(x), Math.round(y)); }
+
+
 	public boolean equals(Vec2f a) { return this.x == a.x && this.y == a.y; }
 
 

@@ -20,7 +20,7 @@ public class NetworkAdapter extends EngineEventAdapter implements INetworkListen
 
 
 	@Override
-	public void onPlayerJoin(int senderID, boolean successful)
+	public void onPlayerJoin(int senderID, String username, boolean successful)
 	{
 
 	}

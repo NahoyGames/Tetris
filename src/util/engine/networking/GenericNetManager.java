@@ -76,7 +76,7 @@ public abstract class GenericNetManager implements INetworkListener
 
 
 	@Override
-	public void onPlayerJoin(int senderID, boolean successful)
+	public void onPlayerJoin(int senderID, String username, boolean successful)
 	{
 
 	}

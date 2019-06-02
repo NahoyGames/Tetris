@@ -7,6 +7,8 @@ import util.engine.networking.server.ServerNetManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -126,4 +128,19 @@ public class Engine
 	public static GenericNetManager network() { return netManager; }
 
 	public static void addListener(IEngineEventListener listener) { eventListeners.add(listener); }
+
+	public static File getResource(String path)
+	{
+		return new File(Engine.class.getClassLoader().getResource(path).getFile());
+	}
+
+	public static void quit()
+	{
+		for (IEngineEventListener e : eventListeners)
+		{
+			e.onApplicationQuit();
+		}
+
+		System.exit(0);
+	}
 }

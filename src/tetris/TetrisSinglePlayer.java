@@ -24,7 +24,10 @@ public class TetrisSinglePlayer extends EngineEventAdapter
 	public TetrisSinglePlayer()
 	{
 		board = new Board();
-		board.setCurrentShape(Shape.getRandomShape(board.grid()));
+
+		for (int i = 0; i < 2; i++) { board.queueShape(Shape.getRandomShape(board.grid())); }
+		board.setNextShape();
+
 		gravitySpeed = 0.5f;
 	}
 
@@ -75,7 +78,8 @@ public class TetrisSinglePlayer extends EngineEventAdapter
 			{
 				board.getCurrentShape().lock();
 				clearLines();
-				board.setCurrentShape(Shape.getRandomShape(board.grid()));
+				board.queueShape(Shape.getRandomShape(board.grid()));
+				board.setNextShape();
 			}
 		}
 	}

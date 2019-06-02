@@ -1,7 +1,6 @@
 package tetris;
 
 import com.esotericsoftware.kryonet.Connection;
-import com.esotericsoftware.kryonet.Server;
 import tetris.packets.*;
 import util.ArrayUtil;
 import util.color.ColorUtil;
@@ -14,8 +13,6 @@ import util.math.Vec2;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Queue;
 
 
 public class TetrisServer extends NetworkAdapter
@@ -34,17 +31,21 @@ public class TetrisServer extends NetworkAdapter
 
 		private Vec2 dir = Vec2.zero();
 		private boolean needsRotation = false;
-		private Queue<Shape> shapeQueue = new LinkedList<>();
 
 		private float gravitySpeed = 0.5f, gravitySpeedTimer; // Time, in seconds, to move one down
 
 		private int linesCleared, linesReceived;
 
-		public ClientBoard(int id) { this.id = id; }
+		public ClientBoard(int id, String username)
+		{
+			super(username);
+
+			this.id = id;
+		}
 
 		public void nextShape()
 		{
-			if (shapeQueue.size() <= 0)
+			while (this.getQueueSize() < ((TetrisConfig)Engine.config()).SHAPE_QUEUE_SIZE + 1)
 			{
 				int randomID = Shape.getRandomShapeID();
 				Color color = ColorUtil.random(0.45f, 0.55f, 0.93f, 0.97f);
@@ -52,12 +53,13 @@ public class TetrisServer extends NetworkAdapter
 				// request more blocks
 				for (ClientBoard board : TetrisServer.this.boards.values())
 				{
-					board.shapeQueue.add(Shape.getShape(randomID, board.grid(), color));
+					board.queueShape(Shape.getShape(randomID, board.grid(), color));
 				}
+				((ServerNetManager)Engine.network()).sendReliable(new QueueShapePacket(randomID, color));
 			}
-			Shape shape = shapeQueue.remove();
-			((ServerNetManager)Engine.network()).sendReliable(new SetCurrentShapePacket(id, Shape.getIdOf(shape), shape.getColor()));
-			setCurrentShape(shape);
+
+			setNextShape();
+			((ServerNetManager)Engine.network()).sendReliable(new NextShapePacket(id));
 		}
 	}
 
@@ -91,15 +93,21 @@ public class TetrisServer extends NetworkAdapter
 
 
 	@Override
-	public void onPlayerJoin(int senderID, boolean successful)
+	public void onPlayerJoin(int senderID, String username, boolean successful)
 	{
-		super.onPlayerJoin(senderID, successful);
+		super.onPlayerJoin(senderID, username, successful);
 
 		if (successful)
 		{
-			boards.put(senderID, new ClientBoard(senderID));
+			boards.put(senderID, new ClientBoard(senderID, username));
 
-			((ServerNetManager)Engine.network()).sendReliable(senderID, new GameStatePacket(ArrayUtil.toArray(boards.keySet()), new String[] {"NOT IMPLEMENTED YET"}));
+			int[] connections = ArrayUtil.toArray(boards.keySet());
+			String[] usernames = new String[boards.values().size()];
+
+			int i = 0;
+			for (Board b : boards.values()) { usernames[i++] = b.getUsername(); }
+
+			((ServerNetManager)Engine.network()).sendReliable(senderID, new GameStatePacket(connections, usernames));
 		}
 	}
 
@@ -119,10 +127,13 @@ public class TetrisServer extends NetworkAdapter
 			{
 				board.getCurrentShape().draw(buffer, blockSize, (board.gravitySpeedTimer - board.gravitySpeed) / ((TetrisConfig) Engine.config()).SHAPE_LOCK_TIME);
 			}
+
+
 			buffer.translate(board.grid().width() * blockSize + 40, 0);
 		}
 		buffer.setTransform(transform);
 	}
+
 
 	@Override
 	public void onUpdate()
@@ -134,9 +145,22 @@ public class TetrisServer extends NetworkAdapter
 			return;
 		}
 
+		int playersLeft = boards.values().size();
+		ClientBoard winner = null;
+
 		for (HashMap.Entry<Integer, ClientBoard> entry : boards.entrySet())
 		{
 			ClientBoard board = entry.getValue();
+
+			if (board.hasLost())
+			{
+				playersLeft--;
+				continue;
+			}
+			else
+			{
+				winner = entry.getValue();
+			}
 
 			if (board.getCurrentShape() == null)
 			{
@@ -165,12 +189,12 @@ public class TetrisServer extends NetworkAdapter
 				if (board.getCurrentShape().move(Vec2.up()))
 				{
 					board.gravitySpeedTimer = 0;
-					didMove |= true;
+					didMove = true;
 				}
 				else if (board.gravitySpeedTimer - board.gravitySpeed >= ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME)
 				{
 					board.getCurrentShape().lock();
-					((ServerNetManager)Engine.network()).sendReliable(new LockCurrentShapePacket(entry.getKey()));
+					((ServerNetManager)Engine.network()).sendReliable(new LockCurrentShapePacket(entry.getKey(), board.getCurrentShape()));
 
 					// Clear lines
 					for (int y = 0; y < board.grid().height() - board.linesReceived; y++)
@@ -189,12 +213,14 @@ public class TetrisServer extends NetworkAdapter
 						{
 							board.grid().clearLine(y);
 							board.linesCleared++;
+							board.gravitySpeed *= 0.9f; // Increase gravity and make the game harder
 
 							for (ClientBoard b : boards.values())
 							{
-								if (b != board)
+								if (b != board && !b.hasLost())
 								{
 									b.grid().addLine();
+									b.getCurrentShape().setPosition(b.getCurrentShape().getPosition().subtract(Vec2.up()), true);
 									b.linesReceived++;
 								}
 							}
@@ -217,6 +243,12 @@ public class TetrisServer extends NetworkAdapter
 			{
 				((ServerNetManager)Engine.network()).sendReliable(new SetShapePositionPacket(entry.getKey(), board.getCurrentShape().getPosition()));
 			}
+		}
+
+		if (playersLeft == 1)
+		{
+			((ServerNetManager)Engine.network()).sendReliable(new PlayerWonPacket(winner.id));
+			Engine.quit();
 		}
 	}
 }

@@ -3,7 +3,6 @@ package util.engine.networking.client;
 
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
-import tetris.packets.GameStatePacket;
 import util.engine.Engine;
 import util.engine.networking.GenericNetManager;
 import util.engine.networking.INetworkListener;
@@ -11,17 +10,20 @@ import util.engine.networking.packets.ClientAuthRequestPacket;
 import util.engine.networking.packets.ClientAuthResponsePacket;
 
 import java.io.IOException;
-import java.util.Collection;
 
 
 public class ClientNetManager extends GenericNetManager
 {
+	private String username = "myUsername";
+
 	private int id = -1;
 
 	public ClientNetManager()
 	{
 		// Generic
 		super(new Client(), Engine.config().REGISTERED_PACKETS);
+
+		this.username = Engine.config().USERNAME;
 	}
 
 
@@ -40,7 +42,7 @@ public class ClientNetManager extends GenericNetManager
 		}
 
 		// Send Auth packet
-		sendReliable(new ClientAuthRequestPacket("myUsername"));
+		sendReliable(new ClientAuthRequestPacket(username));
 	}
 
 	public void sendReliable(Object packet)
@@ -85,7 +87,7 @@ public class ClientNetManager extends GenericNetManager
 
 			for (INetworkListener listener : super.listeners)
 			{
-				listener.onPlayerJoin(responsePacket.id, responsePacket.canJoin);
+				listener.onPlayerJoin(responsePacket.id, username, responsePacket.canJoin);
 			}
 
 			if (!responsePacket.canJoin)

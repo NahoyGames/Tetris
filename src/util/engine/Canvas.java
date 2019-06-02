@@ -69,7 +69,11 @@ public class Canvas
 
 	public Graphics2D getRenderBuffer()
 	{
-		return (Graphics2D) panel.bufferedImage.getGraphics();
+		Graphics2D buffer = (Graphics2D) panel.bufferedImage.getGraphics();
+		buffer.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, Engine.config().TEXT_ANTI_ALIASING ? RenderingHints.VALUE_TEXT_ANTIALIAS_ON : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+		buffer.setRenderingHint(RenderingHints.KEY_ANTIALIASING, Engine.config().ANTI_ALIASING ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+
+		return buffer;
 	}
 
 

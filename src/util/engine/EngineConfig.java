@@ -18,6 +18,10 @@ public class EngineConfig
 	public Color BACKGROUND_COLOR = Color.GRAY;
 	public boolean HEADLESS_MODE = false; // if (true) --> no graphics, no input
 
+	/** GRAPHICS **/
+	public boolean ANTI_ALIASING = false;
+	public boolean TEXT_ANTI_ALIASING = true;
+
 	/** Engine **/
 	public String[] SUPPORTED_VERSIONS = {"0.0.1"};
 	public String VERSION = "0.0.1";
@@ -28,6 +32,7 @@ public class EngineConfig
 	public int UDP_PORT = 54777;
 	public String SERVER_IP = "localhost";
 	public Collection<Class> REGISTERED_PACKETS;
+	public String USERNAME = "Player";
 
 
 	public EngineConfig() { }

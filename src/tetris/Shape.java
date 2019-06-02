@@ -4,6 +4,7 @@ import tetris.shapes.*;
 import util.color.ColorUtil;
 import util.math.Mathf;
 import util.math.Vec2;
+import util.math.Vec2f;
 
 import java.awt.*;
 
@@ -12,6 +13,7 @@ public class Shape
 {
 	private Vec2[] points;
 	private Vec2 position;
+	private int rotation;
 	private Color color;
 
 	private Grid grid;
@@ -70,12 +72,43 @@ public class Shape
 	public Color getColor() { return this.color; }
 
 
-	public void draw(Graphics2D buffer, int blockSize, float lerp)
+	public void draw(Graphics2D buffer, int blockSize, float lerp, Vec2 offset)
 	{
 		buffer.setColor(ColorUtil.lerp(color, new Color(0xD4B22A), lerp));
 		for (Vec2 p : points)
 		{
-			buffer.fillRect((p.x + position.x) * blockSize, (p.y + position.y) * blockSize, blockSize, blockSize);
+			buffer.fillRect((p.x + position.x) * blockSize + offset.x, (p.y + position.y) * blockSize + offset.y, blockSize, blockSize);
+		}
+	}
+
+
+	public void draw(Graphics2D buffer, int blockSize, float lerp)
+	{
+		this.draw(buffer, blockSize, lerp, Vec2.zero());
+	}
+
+
+	private Vec2f centerOffset;
+	public void drawCentered(Graphics2D buffer, int blockSize, float lerp, Vec2 position)
+	{
+		if (centerOffset == null)
+		{
+			Vec2 min = new Vec2(Integer.MAX_VALUE, Integer.MAX_VALUE);
+			Vec2 max = new Vec2(Integer.MIN_VALUE, Integer.MIN_VALUE);
+
+			for (Vec2 v : points)
+			{
+				min = min.min(v);
+				max = max.max(v);
+			}
+
+			centerOffset = new Vec2f(min.x + ((max.x - min.x) / 2f), min.y + ((max.y - min.y) / 2f));
+		}
+
+		buffer.setColor(ColorUtil.lerp(color, new Color(0xD4B22A), lerp));
+		for (Vec2 p : points)
+		{
+			buffer.fillRect((int)((p.x - centerOffset.x) * blockSize) + position.x , (int)((p.y - centerOffset.y) * blockSize) + position.y, blockSize, blockSize);
 		}
 	}
 
@@ -130,6 +163,7 @@ public class Shape
 		}
 
 		points = newPoints;
+		rotation = (rotation + (clockwise ? 1 : -1)) % 4;
 		return true;
 	}
 
@@ -140,7 +174,10 @@ public class Shape
 		{
 			Vec2 inGrid = p.add(position);
 
-			grid.setBlockAt(inGrid.x, inGrid.y,true, color);
+			if (!grid.hasBlockAt(inGrid.x, inGrid.y))
+			{
+				grid.setBlockAt(inGrid.x, inGrid.y, true, color);
+			}
 		}
 	}
 
@@ -171,4 +208,7 @@ public class Shape
 	{
 		return position;
 	}
+
+
+	public int getRotation() { return rotation; }
 }
