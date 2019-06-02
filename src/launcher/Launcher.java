@@ -14,11 +14,8 @@ import java.nio.file.StandardCopyOption;
 
 public class Launcher
 {
-	public static final String LAUNCHER_METADATA_LINK = "https://raw.githubusercontent.com/NahoyGames/SemesterTwoProject/master/src/Launcher/launcherMeta";
+	public static final String LAUNCHER_METADATA_LINK = "https://raw.githubusercontent.com/NahoyGames/Tetris/master/src/launcher/launcherMeta";
 	public static final String LOCAL_VERSION_NAME = "MultiplayerTetris.jar";
-
-	//private static String[] launcherMetaData;
-	//private static File localGameVersion;
 
 
 	public static void main(String[] args)
