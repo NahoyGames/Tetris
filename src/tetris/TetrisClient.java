@@ -137,7 +137,7 @@ public class TetrisClient extends NetworkAdapter
 			int blockSize = Math.min(Engine.canvas().getCurrentWidth() / (myBoard.grid().width() + 1), Engine.canvas().getCurrentHeight() / (myBoard.grid().height() + 1));
 
 			myBoard.grid().draw(buffer, blockSize);
-			if (myBoard.getCurrentShape() != null)
+			if (myBoard.getCurrentShape() != null && !myBoard.hasLost())
 			{
 				myBoard.getCurrentShape().draw(buffer, blockSize, 1);
 			}
@@ -155,7 +155,7 @@ public class TetrisClient extends NetworkAdapter
 			int blockSize = Math.min(Engine.canvas().getCurrentWidth() / (board.grid().width() + 1), Engine.canvas().getCurrentHeight() / (board.grid().height() + 1));
 
 			board.grid().draw(buffer, blockSize);
-			if (board.getCurrentShape() != null)
+			if (board.getCurrentShape() != null && !board.hasLost())
 			{
 				board.getCurrentShape().draw(buffer, blockSize, 1);
 			}

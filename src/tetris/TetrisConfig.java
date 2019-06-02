@@ -41,10 +41,11 @@ public class TetrisConfig extends EngineConfig
 
 		try
 		{
-			TETRIS_FONT = Font.createFont(Font.TRUETYPE_FONT, Engine.getResource("tetris/resources/pixel.ttf")).deriveFont(25f);
+			TETRIS_FONT = Font.createFont(Font.TRUETYPE_FONT, Engine.getResource("pixel.ttf", this)).deriveFont(25f);
 		}
 		catch (Exception e)
 		{
+			TETRIS_FONT = new Font("TimesRoman", Font.TRUETYPE_FONT, 25);
 			System.out.println("Tetris font was not found!");
 			e.printStackTrace();
 		}

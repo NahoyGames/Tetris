@@ -7,8 +7,8 @@ import util.engine.networking.server.ServerNetManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -129,9 +129,9 @@ public class Engine
 
 	public static void addListener(IEngineEventListener listener) { eventListeners.add(listener); }
 
-	public static File getResource(String path)
+	public static InputStream getResource(String path, Object classpath) throws IOException
 	{
-		return new File(Engine.class.getClassLoader().getResource(path).getFile());
+		return classpath.getClass().getResource("/" + path).openStream();
 	}
 
 	public static void quit()
