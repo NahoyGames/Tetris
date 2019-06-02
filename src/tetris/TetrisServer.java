@@ -1,6 +1,7 @@
 package tetris;
 
 import com.esotericsoftware.kryonet.Connection;
+import launcher.Launcher;
 import tetris.packets.*;
 import util.ArrayUtil;
 import util.color.ColorUtil;
@@ -12,6 +13,7 @@ import util.math.Vec2;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.io.IOException;
 import java.util.HashMap;
 
 
@@ -65,11 +67,21 @@ public class TetrisServer extends NetworkAdapter
 
 
 	private HashMap<Integer, ClientBoard> boards;
+	private int playersToStart = 2;
 
 
 	public TetrisServer()
 	{
 		boards = new HashMap<>();
+
+		try
+		{
+			playersToStart = Integer.parseInt(Launcher.getLauncherMetaData()[3]);
+		}
+		catch (Exception e)
+		{
+			System.err.println("Could not determine the required number of players to start... Using the default \"" + playersToStart + "\"");
+		}
 	}
 
 
@@ -140,7 +152,7 @@ public class TetrisServer extends NetworkAdapter
 	{
 		super.onUpdate();
 
-		if (boards.values().size() < 2)
+		if (boards.values().size() < playersToStart)
 		{
 			return;
 		}

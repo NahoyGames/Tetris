@@ -35,6 +35,7 @@ public class TetrisClient extends NetworkAdapter
 	}
 
 	private HashMap<Integer, Board> boards;
+	private boolean gameStarted = false;
 
 
 	public TetrisClient()
@@ -102,6 +103,8 @@ public class TetrisClient extends NetworkAdapter
 		}
 		else if (packet instanceof QueueShapePacket)
 		{
+			gameStarted = true;
+
 			QueueShapePacket shapePacket = (QueueShapePacket)packet;
 
 			for (Board b : boards.values())
@@ -172,6 +175,27 @@ public class TetrisClient extends NetworkAdapter
 			buffer.translate(board.grid().width() * blockSize + 40, 0);
 		}
 		buffer.setTransform(transform);
+
+		// Has game started?
+		if (!gameStarted)
+		{
+			buffer.setColor(new Color(18, 18, 18, 190));
+			buffer.fillRect(0,0, Engine.canvas().getCurrentWidth(), Engine.canvas().getCurrentHeight());
+
+			Font font;
+			buffer.setColor(new Color(0xF1E7F1));
+
+			buffer.setFont(font = ((TetrisConfig)Engine.config()).TETRIS_FONT.deriveFont(30f));
+			FontMetrics metrics = buffer.getFontMetrics(font);
+			String string = "Waiting    for    players";
+			buffer.drawString(string, (Engine.canvas().getCurrentWidth() - metrics.stringWidth(string)) / 2, (Engine.canvas().getCurrentHeight() + metrics.getHeight()) / 2);
+
+			buffer.setFont(font = ((TetrisConfig)Engine.config()).TETRIS_FONT.deriveFont(15f));
+			metrics = buffer.getFontMetrics(font);
+			string = "The    game    will    start    shortly";
+			buffer.drawString(string, (Engine.canvas().getCurrentWidth() - metrics.stringWidth(string)) / 2, (Engine.canvas().getCurrentHeight() + metrics.getHeight()) / 2 + 50);
+
+		}
 	}
 
 

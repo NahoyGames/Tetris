@@ -15,7 +15,7 @@ import java.nio.file.StandardCopyOption;
 public class Launcher
 {
 	public static final String LAUNCHER_METADATA_LINK = "https://raw.githubusercontent.com/NahoyGames/Tetris/master/src/launcher/launcherMeta";
-	public static final String LOCAL_VERSION_NAME = "MultiplayerTetris.jar";
+	public static final String LOCAL_VERSION_NAME = "tetris_game_latest_version.jar";
 
 
 	public static void main(String[] args)
@@ -56,7 +56,7 @@ public class Launcher
 				try
 				{
 					System.out.println("Attempting to launch the game...");
-					Runtime.getRuntime().exec("java -jar " + localGameVersion.getPath() + " " + launcherMetaData[2] + " " + usernameField.getText());
+					Runtime.getRuntime().exec("java -jar " + localGameVersion.getPath() + " " + launcherMetaData[2] + " " + usernameField.getText().replaceAll("\\s+", ""));
 					System.exit(0);
 				}
 				catch (Exception ex)
@@ -76,7 +76,7 @@ public class Launcher
 	}
 
 
-	private static String[] getLauncherMetaData() throws Exception
+	public static String[] getLauncherMetaData() throws Exception
 	{
 		URL url = new URL(LAUNCHER_METADATA_LINK);
 
@@ -85,10 +85,11 @@ public class Launcher
 		String version = in.readLine();
 		String jarLink = in.readLine();
 		String serverIp = in.readLine();
+		String playersToStart = in.readLine();
 
 		in.close();
 
-		return new String[] { version, jarLink, serverIp };
+		return new String[] { version, jarLink, serverIp, playersToStart };
 	}
 
 
