@@ -190,7 +190,7 @@ public class TetrisServer extends NetworkAdapter
 			{
 				if (board.needsRotation = board.getCurrentShape().rotate(true))
 				{
-					((ServerNetManager)Engine.network()).sendReliable(new RotateShapePacket(entry.getKey()));
+					((ServerNetManager)Engine.network()).sendReliable(entry.getKey(), new RotateShapePacket());
 				}
 			}
 
@@ -253,7 +253,7 @@ public class TetrisServer extends NetworkAdapter
 
 			if (didMove)
 			{
-				((ServerNetManager)Engine.network()).sendUnreliable(new SetShapePositionPacket(entry.getKey(), board.getCurrentShape().getPosition()));
+				((ServerNetManager)Engine.network()).sendReliable(entry.getKey(), new SetShapePositionPacket(board.getCurrentShape().getPosition()));
 			}
 		}
 

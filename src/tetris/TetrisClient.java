@@ -75,23 +75,17 @@ public class TetrisClient extends NetworkAdapter
 		{
 			SetShapePositionPacket positionPacket = (SetShapePositionPacket)packet;
 
-			boards.get(positionPacket.connectionID).getCurrentShape().setPosition(positionPacket.getPosition(), true);
+			boards.get(((ClientNetManager)Engine.network()).id()).getCurrentShape().setPosition(positionPacket.getPosition(), true);
 
-			if (positionPacket.connectionID == ((ClientNetManager)Engine.network()).id())
-			{
-				lerpTime = 0f;
-			}
+			lerpTime = 0f;
 		}
 		else if (packet instanceof RotateShapePacket)
 		{
 			RotateShapePacket rotatePacket = (RotateShapePacket)packet;
 
-			boards.get(rotatePacket.connectionID).getCurrentShape().rotate(true);
+			boards.get(((ClientNetManager)Engine.network()).id()).getCurrentShape().rotate(true);
 
-			if (rotatePacket.connectionID == ((ClientNetManager)Engine.network()).id())
-			{
-				lerpTime = 0f;
-			}
+			lerpTime = 0f;
 		}
 		else if (packet instanceof LockCurrentShapePacket)
 		{
@@ -99,10 +93,7 @@ public class TetrisClient extends NetworkAdapter
 			Shape shape = boards.get(lockPacket.connectionID).getCurrentShape();
 
 			shape.setPosition(lockPacket.position(), true);
-			while (shape.getRotation() != lockPacket.rotation)
-			{
-				shape.rotate(true);
-			}
+			shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
 			shape.lock();
 		}
 		else if (packet instanceof ClearLinePacket)
@@ -181,10 +172,10 @@ public class TetrisClient extends NetworkAdapter
 			int blockSize = Math.min(Engine.canvas().getCurrentWidth() / (board.grid().width() + 1), Engine.canvas().getCurrentHeight() / (board.grid().height() + 1));
 
 			board.grid().draw(buffer, blockSize);
-			if (board.getCurrentShape() != null && !board.hasLost())
-			{
-				board.getCurrentShape().draw(buffer, blockSize, 1);
-			}
+//			if (board.getCurrentShape() != null && !board.hasLost())
+//			{
+//				board.getCurrentShape().draw(buffer, blockSize, 1);
+//			}
 
 			// Username
 			buffer.setColor(new Color(0xB2C6C7));

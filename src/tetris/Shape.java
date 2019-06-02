@@ -148,33 +148,43 @@ public class Shape
 
 	public boolean rotate(boolean clockwise)
 	{
-		Vec2[] newPoints = new Vec2[points.length];
+		return rotate(clockwise, 1, false);
+	}
 
-		int i = 0;
-		for (Vec2 p : points)
+
+	public boolean rotate(boolean clockwise, int amount, boolean overrideLogic)
+	{
+		amount = Math.abs(amount);
+
+		Vec2[] newPoints = points.clone();
+
+		for (int j = 0; j < amount; j++)
 		{
-			Vec2 rotated;
-			Vec2 inGrid;
-			if (clockwise)
+			int i = 0;
+			for (Vec2 p : newPoints)
 			{
-				rotated = new Vec2(-p.y, p.x);
-			}
-			else
-			{
-				rotated = new Vec2(p.y, -p.x);
-			}
-			inGrid = rotated.add(position);
+				Vec2 rotated;
+				Vec2 inGrid;
+				if (clockwise)
+				{
+					rotated = new Vec2(-p.y, p.x);
+				} else
+				{
+					rotated = new Vec2(p.y, -p.x);
+				}
+				inGrid = rotated.add(position);
 
-			if (inGrid.x >= grid.width() || inGrid.x < 0 || inGrid.y >= grid.height() || grid.hasBlockAt(inGrid.x, inGrid.y))
-			{
-				return false;
-			}
+				if ((inGrid.x >= grid.width() || inGrid.x < 0 || inGrid.y >= grid.height() || grid.hasBlockAt(inGrid.x, inGrid.y)) && !overrideLogic)
+				{
+					return false;
+				}
 
-			newPoints[i++] = rotated;
+				newPoints[i++] = rotated;
+			}
 		}
 
 		points = newPoints;
-		rotation = (rotation + (clockwise ? 1 : -1)) % 4;
+		rotation = (rotation + (clockwise ? amount : -amount)) % 4;
 		return true;
 	}
 
