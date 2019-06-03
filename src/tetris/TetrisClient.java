@@ -217,7 +217,7 @@ public class TetrisClient extends NetworkAdapter
 		{
 			this.dir.x = Input.getButton(KeyEvent.VK_RIGHT) ? 1 : Math.min(this.dir.x, 0);
 		}
-		if (Input.getButtonDown(KeyEvent.VK_UP))
+		if (Input.getButtonDown(KeyEvent.VK_UP) || Input.getButtonDown(KeyEvent.VK_Z))
 		{
 			if (myBoard.getCurrentShape().rotate(true))
 			{
