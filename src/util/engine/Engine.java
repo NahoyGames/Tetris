@@ -27,6 +27,7 @@ public class Engine
 	// Gameplay
 	private static boolean isPlaying, isPaused;
 	private static List<IEngineEventListener> eventListeners;
+	private static Timer timer;
 
 
 	public static void init(EngineConfig config)
@@ -56,7 +57,7 @@ public class Engine
 
 		// Game Loop
 		Time.step();
-		Timer timer = new Timer(1000 / config.FRAMES_PER_SECOND, (ActionEvent) ->
+		timer = new Timer(1000 / config.FRAMES_PER_SECOND, (ActionEvent) ->
 		{
 			if (!isPlaying)
 			{
@@ -132,6 +133,16 @@ public class Engine
 	public static InputStream getResource(String path, Object classpath) throws IOException
 	{
 		return classpath.getClass().getResource("/" + path).openStream();
+	}
+
+	public static void pause()
+	{
+		timer.stop();
+	}
+
+	public static void resume()
+	{
+		timer.start();
 	}
 
 	public static void quit()

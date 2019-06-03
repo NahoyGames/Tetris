@@ -75,6 +75,18 @@ public class ServerNetManager extends GenericNetManager
 	}
 
 
+	public void sendReliableExcept(int connection, Object packet)
+	{
+		if (this.transport == null)
+		{
+			System.out.println("Cannot send a message because the transport is missing or is not connected!");
+			return;
+		}
+
+		((Server)transport).sendToAllExceptTCP(connection, packet);
+	}
+
+
 	public void sendUnreliable(Connection connection, Object packet)
 	{
 		if (this.transport == null)
@@ -108,6 +120,18 @@ public class ServerNetManager extends GenericNetManager
 		}
 
 		((Server)transport).sendToAllUDP(packet);
+	}
+
+
+	public void sendUnreliableExcept(int connection, Object packet)
+	{
+		if (this.transport == null)
+		{
+			System.out.println("Cannot send a message because the transport is missing or is not connected!");
+			return;
+		}
+
+		((Server)transport).sendToAllExceptUDP(connection, packet);
 	}
 
 

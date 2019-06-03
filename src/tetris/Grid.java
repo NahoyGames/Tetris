@@ -2,6 +2,7 @@ package tetris;
 
 
 import util.ArrayUtil;
+import util.engine.Engine;
 
 import java.awt.*;
 
@@ -95,9 +96,29 @@ public class Grid
 	}
 
 
-	public void clearLine(int index)
+	public void draw(Graphics2D buffer)
 	{
-		for (int clear = index; clear > 0; clear--)
+		this.draw(buffer, this.blockSize());
+	}
+
+
+	public boolean hasFullLine(int y)
+	{
+		for (int x = 0; x < this.width(); x++)
+		{
+			if (!this.hasBlockAt(x, y))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+
+	public void clearLine(int y)
+	{
+		for (int clear = y; clear > 0; clear--)
 		{
 			for (int x = 0; x < this.width(); x++)
 			{
@@ -129,4 +150,10 @@ public class Grid
 
 
 	public boolean hasLost() { return hasLost; }
+
+
+	public int blockSize()
+	{
+		return Math.min(Engine.canvas().getCurrentWidth() / (this.width() + 1), (Engine.canvas().getCurrentHeight() - 60) / this.height() + 1);
+	}
 }

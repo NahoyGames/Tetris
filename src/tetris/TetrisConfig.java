@@ -11,6 +11,7 @@ import java.awt.*;
 public class TetrisConfig extends EngineConfig
 {
 	public float SHAPE_LOCK_TIME = 0.75f;
+	public float SHAPE_MOVEMENT_SPEED = 10; // Moves per second
 	public int SHAPE_QUEUE_SIZE = 5;
 	public Font TETRIS_FONT;
 
@@ -31,7 +32,7 @@ public class TetrisConfig extends EngineConfig
 
 	public TetrisConfig(boolean isServer, String username)
 	{
-		super("Tetris " + (isServer ? "Server" : "Client"), isServer ? 10 : 30);
+		super("Tetris " + (isServer ? "Server" : "Client"), isServer ? 60 : 60);
 
 		BACKGROUND_COLOR = new Color(0x444E5C);
 		ANTI_ALIASING = TEXT_ANTI_ALIASING = false;
@@ -51,16 +52,11 @@ public class TetrisConfig extends EngineConfig
 		}
 
 		/** REGISTER PACKETS HERE **/
-		REGISTERED_PACKETS.add(InputPacket.class);
 		REGISTERED_PACKETS.add(int[].class);
 		REGISTERED_PACKETS.add(String[].class);
 		REGISTERED_PACKETS.add(GameStatePacket.class);
-		REGISTERED_PACKETS.add(SetShapePositionPacket.class);
-		REGISTERED_PACKETS.add(RotateShapePacket.class);
 		REGISTERED_PACKETS.add(LockCurrentShapePacket.class);
-		REGISTERED_PACKETS.add(ClearLinePacket.class);
 		REGISTERED_PACKETS.add(QueueShapePacket.class);
-		REGISTERED_PACKETS.add(NextShapePacket.class);
 		REGISTERED_PACKETS.add(PlayerWonPacket.class);
 	}
 }

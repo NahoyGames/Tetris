@@ -88,6 +88,18 @@ public class Shape
 	}
 
 
+	public void draw(Graphics2D buffer, float lerp)
+	{
+		this.draw(buffer, this.grid.blockSize(), lerp);
+	}
+
+
+	public void draw(Graphics2D buffer)
+	{
+		this.draw(buffer, 1f);
+	}
+
+
 	private Vec2f centerOffset;
 	public void drawCentered(Graphics2D buffer, int blockSize, float lerp, Vec2 position)
 	{

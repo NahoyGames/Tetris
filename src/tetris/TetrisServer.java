@@ -6,14 +6,12 @@ import tetris.packets.*;
 import util.ArrayUtil;
 import util.color.ColorUtil;
 import util.engine.Engine;
-import util.engine.Time;
 import util.engine.networking.NetworkAdapter;
 import util.engine.networking.server.ServerNetManager;
 import util.math.Vec2;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
-import java.io.IOException;
 import java.util.HashMap;
 
 
@@ -27,47 +25,10 @@ public class TetrisServer extends NetworkAdapter
 	}
 
 
-	private class ClientBoard extends Board
-	{
-		private int id;
+	private HashMap<Integer, NetBoard> boards;
 
-		private Vec2 dir = Vec2.zero();
-		private boolean needsRotation = false;
-
-		private float gravitySpeed = 0.5f, gravitySpeedTimer; // Time, in seconds, to move one down
-
-		private int linesCleared, linesReceived;
-
-		public ClientBoard(int id, String username)
-		{
-			super(username);
-
-			this.id = id;
-		}
-
-		public void nextShape()
-		{
-			while (this.getQueueSize() < ((TetrisConfig)Engine.config()).SHAPE_QUEUE_SIZE + 1)
-			{
-				int randomID = Shape.getRandomShapeID();
-				Color color = ColorUtil.random(0.45f, 0.55f, 0.93f, 0.97f);
-
-				// request more blocks
-				for (ClientBoard board : TetrisServer.this.boards.values())
-				{
-					board.queueShape(Shape.getShape(randomID, board.grid(), color));
-				}
-				((ServerNetManager)Engine.network()).sendReliable(new QueueShapePacket(randomID, color));
-			}
-
-			setNextShape();
-			((ServerNetManager)Engine.network()).sendReliable(new NextShapePacket(id));
-		}
-	}
-
-
-	private HashMap<Integer, ClientBoard> boards;
 	private int playersToStart = 2;
+	private boolean gameStarted = false;
 
 
 	public TetrisServer()
@@ -90,17 +51,39 @@ public class TetrisServer extends NetworkAdapter
 	{
 		super.onReceivePacket(sender, packet);
 
-		// Input
-		if (packet instanceof InputPacket)
-		{
-			InputPacket inputPacket = (InputPacket)packet;
-			ClientBoard board = boards.get(sender.getID());
+		ServerNetManager netManager = ((ServerNetManager)Engine.network());
 
-			if (inputPacket.input() == TetrisInput.Down) { board.dir.y = inputPacket.on ? 1 : 0; }
-			else if (inputPacket.input() == TetrisInput.Right) { board.dir.x = inputPacket.on ? 1 : Math.min(board.dir.x, 0); }
-			else if (inputPacket.input() == TetrisInput.Left) { board.dir.x = inputPacket.on ? -1 : Math.max(board.dir.x, 0); }
-			else if (inputPacket.input() == TetrisInput.Rotate) { board.needsRotation = true; }
+		if (packet instanceof LockCurrentShapePacket)
+		{
+			LockCurrentShapePacket lockPacket = (LockCurrentShapePacket)packet;
+			Shape shape = boards.get(lockPacket.connectionID).getCurrentShape();
+
+			shape.setPosition(lockPacket.position(), true);
+			shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
+			shape.lock();
+
+			// Forward the message
+			netManager.sendReliableExcept(sender.getID(), packet);
+
+			// Queue in another shape to replace
+			// This is done every time, rather dumbly, but it doesn't hurt the program so why bother
+			boards.get(lockPacket.connectionID).setNextShape();
+			this.queueShapeForEveryone();
 		}
+	}
+
+
+	private void queueShapeForEveryone()
+	{
+		int randomID = Shape.getRandomShapeID();
+		Color color = ColorUtil.random(0.45f, 0.55f, 0.93f, 0.97f);
+
+		// request more blocks
+		for (NetBoard board : boards.values())
+		{
+			board.queueShape(Shape.getShape(randomID, board.grid(), color));
+		}
+		((ServerNetManager)Engine.network()).sendReliable(new QueueShapePacket(randomID, color));
 	}
 
 
@@ -111,7 +94,7 @@ public class TetrisServer extends NetworkAdapter
 
 		if (successful)
 		{
-			boards.put(senderID, new ClientBoard(senderID, username));
+			boards.put(senderID, new NetBoard(username, senderID));
 
 			int[] connections = ArrayUtil.toArray(boards.keySet());
 			String[] usernames = new String[boards.values().size()];
@@ -130,18 +113,16 @@ public class TetrisServer extends NetworkAdapter
 		super.onGraphicCull(buffer);
 
 		AffineTransform transform = buffer.getTransform();
-		for (ClientBoard board : boards.values())
+		for (NetBoard board : boards.values())
 		{
-			int blockSize = Math.min(Engine.canvas().getCurrentWidth() / (board.grid().width() + 1), Engine.canvas().getCurrentHeight() / (board.grid().height() + 1));
-
-			board.grid().draw(buffer, blockSize);
+			board.grid().draw(buffer);
 			if (board.getCurrentShape() != null)
 			{
-				board.getCurrentShape().draw(buffer, blockSize, (board.gravitySpeedTimer - board.gravitySpeed) / ((TetrisConfig) Engine.config()).SHAPE_LOCK_TIME);
+				board.getCurrentShape().draw(buffer);
 			}
 
 
-			buffer.translate(board.grid().width() * blockSize + 40, 0);
+			buffer.translate(board.grid().width() * board.grid().blockSize() + 40, 0);
 		}
 		buffer.setTransform(transform);
 	}
@@ -152,18 +133,56 @@ public class TetrisServer extends NetworkAdapter
 	{
 		super.onUpdate();
 
-		if (boards.values().size() < playersToStart)
+		/** START GAME **/
+		if (!gameStarted)
 		{
-			return;
+			if (boards.values().size() >= playersToStart)
+			{
+				gameStarted = true;
+
+				for (int i = 0; i < ((TetrisConfig)Engine.config()).SHAPE_QUEUE_SIZE + 1; i++)
+				{
+					queueShapeForEveryone();
+				}
+
+				for (NetBoard board : boards.values())
+				{
+					board.setNextShape();
+				}
+			}
+			else
+			{
+				return;
+			}
 		}
 
-		int playersLeft = boards.values().size();
-		ClientBoard winner = null;
-
-		for (HashMap.Entry<Integer, ClientBoard> entry : boards.entrySet())
+		/** CLEAR LINES **/
+		for (NetBoard board : boards.values())
 		{
-			ClientBoard board = entry.getValue();
+			for (int y = 0; y < board.grid().height() - board.getLinesReceived(); y++)
+			{
+				if (board.grid().hasFullLine(y))
+				{
+					board.clearLine(y);
 
+					// Add a line to everyone else
+					for (NetBoard b : boards.values())
+					{
+						if (b != board && !b.hasLost())
+						{
+							b.addLine();
+						}
+					}
+				}
+			}
+		}
+
+		/** FIND WINNER, IF ANY **/
+		int playersLeft = boards.values().size();
+		NetBoard winner = null;
+
+		for (NetBoard board : boards.values())
+		{
 			if (board.hasLost())
 			{
 				playersLeft--;
@@ -171,95 +190,14 @@ public class TetrisServer extends NetworkAdapter
 			}
 			else
 			{
-				winner = entry.getValue();
-			}
-
-			if (board.getCurrentShape() == null)
-			{
-				board.nextShape();
-			}
-
-			boolean didMove = false;
-
-			// Movement
-			if (!board.dir.equals(Vec2.zero()))
-			{
-				board.dir.x = (didMove = board.getCurrentShape().move(board.dir)) ? board.dir.x : 0;
-			}
-			if (board.needsRotation)
-			{
-				if (board.needsRotation = board.getCurrentShape().rotate(true))
-				{
-					((ServerNetManager)Engine.network()).sendReliable(entry.getKey(), new RotateShapePacket());
-				}
-			}
-
-			// Gravity
-			board.gravitySpeedTimer += Time.deltaTime(true);
-			if (board.gravitySpeedTimer >= board.gravitySpeed)
-			{
-				if (board.getCurrentShape().move(Vec2.up()))
-				{
-					board.gravitySpeedTimer = 0;
-					didMove = true;
-				}
-				else if (board.gravitySpeedTimer - board.gravitySpeed >= ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME)
-				{
-					board.getCurrentShape().lock();
-					((ServerNetManager)Engine.network()).sendReliable(new LockCurrentShapePacket(entry.getKey(), board.getCurrentShape()));
-
-					// Clear lines
-					for (int y = 0; y < board.grid().height() - board.linesReceived; y++)
-					{
-						boolean fullLine = true;
-						for (int x = 0; x < board.grid().width(); x++)
-						{
-							if (!board.grid().hasBlockAt(x, y))
-							{
-								fullLine = false;
-								break;
-							}
-						}
-
-						if (fullLine)
-						{
-							board.grid().clearLine(y);
-							board.linesCleared++;
-							board.gravitySpeed *= 0.9f; // Increase gravity and make the game harder
-
-							for (ClientBoard b : boards.values())
-							{
-								if (b != board && !b.hasLost())
-								{
-									b.grid().addLine();
-									b.getCurrentShape().setPosition(b.getCurrentShape().getPosition().subtract(Vec2.up()), true);
-									b.linesReceived++;
-								}
-							}
-
-							((ServerNetManager)Engine.network()).sendReliable(new ClearLinePacket(entry.getKey(), y));
-						}
-					}
-
-					board.nextShape();
-				}
-				else if ((board.dir.x != 0 || board.needsRotation))
-				{
-					board.gravitySpeedTimer = board.gravitySpeed;
-				}
-			}
-
-			board.needsRotation = false;
-
-			if (didMove)
-			{
-				((ServerNetManager)Engine.network()).sendReliable(entry.getKey(), new SetShapePositionPacket(board.getCurrentShape().getPosition()));
+				winner = board;
 			}
 		}
 
+		/** ANNOUNCE WINNER **/
 		if (playersLeft == 1)
 		{
-			((ServerNetManager)Engine.network()).sendReliable(new PlayerWonPacket(winner.id));
+			((ServerNetManager)Engine.network()).sendReliable(new PlayerWonPacket(winner.id()));
 			Engine.quit();
 		}
 	}
