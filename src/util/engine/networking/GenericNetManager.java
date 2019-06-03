@@ -4,13 +4,14 @@ package util.engine.networking;
 import com.esotericsoftware.kryonet.Connection;
 import com.esotericsoftware.kryonet.EndPoint;
 import com.esotericsoftware.kryonet.Listener;
+import util.engine.EngineEventAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 
-public abstract class GenericNetManager implements INetworkListener
+public abstract class GenericNetManager extends EngineEventAdapter implements INetworkListener
 {
 	protected EndPoint transport;
 
@@ -19,6 +20,8 @@ public abstract class GenericNetManager implements INetworkListener
 
 	protected GenericNetManager(EndPoint transportType, Collection<Class> registeredPackets)
 	{
+		super();
+
 		// Transport
 		this.transport = transportType;
 
@@ -77,6 +80,13 @@ public abstract class GenericNetManager implements INetworkListener
 
 	@Override
 	public void onPlayerJoin(int senderID, String username, boolean successful)
+	{
+
+	}
+
+
+	@Override
+	public void onPlayerDisconnect(int senderID)
 	{
 
 	}

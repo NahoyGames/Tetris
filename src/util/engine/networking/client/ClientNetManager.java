@@ -4,10 +4,12 @@ package util.engine.networking.client;
 import com.esotericsoftware.kryonet.Client;
 import com.esotericsoftware.kryonet.Connection;
 import util.engine.Engine;
+import util.engine.IEngineEventListener;
 import util.engine.networking.GenericNetManager;
 import util.engine.networking.INetworkListener;
 import util.engine.networking.packets.ClientAuthRequestPacket;
 import util.engine.networking.packets.ClientAuthResponsePacket;
+import util.engine.networking.packets.PlayerDisconnectPacket;
 
 import java.io.IOException;
 
@@ -96,5 +98,23 @@ public class ClientNetManager extends GenericNetManager
 				System.exit(0);
 			}
 		}
+		else if (packet instanceof PlayerDisconnectPacket)
+		{
+			int id = ((PlayerDisconnectPacket) packet).connectionID;
+
+			for (INetworkListener e : listeners)
+			{
+				e.onPlayerDisconnect(id);
+			}
+		}
+	}
+
+
+	@Override
+	public void onApplicationQuit()
+	{
+		super.onApplicationQuit();
+
+		sendReliable(new PlayerDisconnectPacket(this.id()));
 	}
 }

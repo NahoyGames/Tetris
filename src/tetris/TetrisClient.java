@@ -180,6 +180,14 @@ public class TetrisClient extends NetworkAdapter
 
 
 	@Override
+	public void onPlayerDisconnect(int senderID)
+	{
+		super.onPlayerDisconnect(senderID);
+
+		boards.remove(senderID);
+	}
+
+	@Override
 	public void onUpdate()
 	{
 		super.onUpdate();
@@ -188,6 +196,8 @@ public class TetrisClient extends NetworkAdapter
 
 		if (myBoard == null)
 		{
+			System.out.println("My board is null");
+
 			if ((myBoard = boards.get(netManager.id())) == null)
 			{
 				return;
@@ -245,7 +255,6 @@ public class TetrisClient extends NetworkAdapter
 		}
 
 		/** SHAPE LOCK & NETWORKING **/
-		System.out.println(shapeLockTimer);
 		if (shapeLockTimer >= ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME)
 		{
 			myBoard.getCurrentShape().lock(); // Lock locally

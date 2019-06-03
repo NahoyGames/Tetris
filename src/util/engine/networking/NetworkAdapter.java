@@ -24,4 +24,11 @@ public class NetworkAdapter extends EngineEventAdapter implements INetworkListen
 	{
 
 	}
+
+
+	@Override
+	public void onPlayerDisconnect(int senderID)
+	{
+
+	}
 }

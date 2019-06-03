@@ -108,6 +108,14 @@ public class TetrisServer extends NetworkAdapter
 
 
 	@Override
+	public void onPlayerDisconnect(int senderID)
+	{
+		super.onPlayerDisconnect(senderID);
+
+		boards.remove(senderID);
+	}
+
+	@Override
 	public void onGraphicCull(Graphics2D buffer)
 	{
 		super.onGraphicCull(buffer);

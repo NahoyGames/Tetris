@@ -7,9 +7,12 @@ import util.engine.networking.server.ServerNetManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.EventListener;
 import java.util.List;
 
 
@@ -52,6 +55,19 @@ public class Engine
 		if (!config.HEADLESS_MODE)
 		{
 			canvas = new Canvas(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, config.WINDOW_NAME);
+			canvas.getFrame().addWindowListener(new WindowAdapter()
+			{
+				@Override
+				public void windowClosing(WindowEvent ev)
+				{
+					super.windowClosing(ev);
+
+					for (IEngineEventListener e : eventListeners)
+					{
+						e.onApplicationQuit();
+					}
+				}
+			});
 			new Input();
 		}
 

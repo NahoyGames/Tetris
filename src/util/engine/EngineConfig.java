@@ -2,6 +2,7 @@ package util.engine;
 
 import util.engine.networking.packets.ClientAuthRequestPacket;
 import util.engine.networking.packets.ClientAuthResponsePacket;
+import util.engine.networking.packets.PlayerDisconnectPacket;
 import util.engine.networking.packets.PlayerSuccessfullyJoinedPacket;
 
 import java.awt.*;
@@ -49,5 +50,6 @@ public class EngineConfig
 		REGISTERED_PACKETS.add(ClientAuthResponsePacket.class);
 		REGISTERED_PACKETS.add(ClientAuthRequestPacket.class);
 		REGISTERED_PACKETS.add(PlayerSuccessfullyJoinedPacket.class);
+		REGISTERED_PACKETS.add(PlayerDisconnectPacket.class);
 	}
 }

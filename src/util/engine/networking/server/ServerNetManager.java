@@ -9,6 +9,7 @@ import util.engine.networking.GenericNetManager;
 import util.engine.networking.INetworkListener;
 import util.engine.networking.packets.ClientAuthRequestPacket;
 import util.engine.networking.packets.ClientAuthResponsePacket;
+import util.engine.networking.packets.PlayerDisconnectPacket;
 import util.engine.networking.packets.PlayerSuccessfullyJoinedPacket;
 
 import java.io.IOException;
@@ -172,6 +173,17 @@ public class ServerNetManager extends GenericNetManager
 			{
 				sendReliable(new PlayerSuccessfullyJoinedPacket(sender.getID(), requestPacket.username));
 			}
+		}
+		else if (packet instanceof PlayerDisconnectPacket)
+		{
+			int id = ((PlayerDisconnectPacket) packet).connectionID;
+
+			for (INetworkListener listener : listeners)
+			{
+				listener.onPlayerDisconnect(id);
+			}
+
+			sendReliable(packet);
 		}
 	}
 }
