@@ -10,6 +10,8 @@ import java.awt.*;
 
 public class TetrisConfig extends EngineConfig
 {
+	public int PLAYERS_TO_START = 2;
+
 	public float SHAPE_LOCK_TIME = 0.75f;
 	public float SHAPE_MOVEMENT_SPEED = 10; // Moves per second
 	public int SHAPE_QUEUE_SIZE = 5;

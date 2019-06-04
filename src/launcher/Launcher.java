@@ -1,6 +1,8 @@
 package launcher;
 
 
+import util.ParseUtil;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
@@ -11,10 +13,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Launcher
 {
-	public static final String LAUNCHER_METADATA_LINK = "https://raw.githubusercontent.com/NahoyGames/Tetris/master/src/launcher/launcherMeta";
+	public static final String LAUNCHER_METADATA_LINK = "https://docs.google.com/spreadsheets/d/1lC6AnZgw4LGute_icCiwuRZVOLTbTUJC7ckkOgK6MXU/export?format=tsv";
 	public static final String LOCAL_VERSION_NAME = "tetris_game_latest_version.jar";
 
 
@@ -23,6 +27,7 @@ public class Launcher
 		JFrame frame = new JFrame("Multiplayer Tetris Launcher");
 		frame.setSize(300, 400);
 		frame.setResizable(true);
+
 
 		final JTextField usernameField = new JTextField("Username", 10);
 		final JLabel statusLabel = new JLabel();
@@ -40,12 +45,12 @@ public class Launcher
 		try
 		{
 			statusLabel.setText("Connecting to server...");
-			String[] launcherMetaData = getLauncherMetaData();
-			System.out.println("The latest game version is: " + launcherMetaData[0]);
+			String[][] launcherMetaData = getLauncherMetaData();
+			System.out.println("The latest game version is: " + launcherMetaData[3][1]);
 
 			statusLabel.setText("Downloading latest game build...");
-			System.out.println("Attempting to download the latest game file at \"" + launcherMetaData[1] + "\"...");
-			File localGameVersion = downloadGameVersion(launcherMetaData[1]);
+			System.out.println("Attempting to download the latest game file at \"" + launcherMetaData[4][1] + "\"...");
+			File localGameVersion = downloadGameVersion(launcherMetaData[4][1]);
 
 			System.out.println("Successfully downloaded the latest game version!");
 
@@ -56,7 +61,13 @@ public class Launcher
 				try
 				{
 					System.out.println("Attempting to launch the game...");
-					Runtime.getRuntime().exec("java -jar " + localGameVersion.getPath() + " " + launcherMetaData[2] + " " + usernameField.getText().replaceAll("\\s+", ""));
+					// java -jar JAR_PATH SERVER_IP TCP UDP USERNAME
+					Runtime.getRuntime().exec("java -jar "
+							+ localGameVersion.getPath() + " "
+							+ launcherMetaData[0][1] + " "
+							+ launcherMetaData[1][1] + " "
+							+ launcherMetaData[2][1] + " "
+							+ usernameField.getText().replaceAll("\\s+", ""));
 					System.exit(0);
 				}
 				catch (Exception ex)
@@ -71,25 +82,24 @@ public class Launcher
 		catch (Exception e)
 		{
 			System.err.println("An error occurred while trying to fetch the latest game version...");
+			e.printStackTrace();
 			System.exit(-1);
 		}
 	}
 
 
-	public static String[] getLauncherMetaData() throws Exception
+	public static String[][] getLauncherMetaData() throws Exception
 	{
 		URL url = new URL(LAUNCHER_METADATA_LINK);
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 
-		String version = in.readLine();
-		String jarLink = in.readLine();
-		String serverIp = in.readLine();
-		String playersToStart = in.readLine();
+		String[] rows = in.lines().toArray(String[]::new);
+		//String file = in.lines().collect(Collectors.joining("\n"));
 
 		in.close();
 
-		return new String[] { version, jarLink, serverIp, playersToStart };
+		return ParseUtil.parseTSV(rows);
 	}
 
 
@@ -100,19 +110,5 @@ public class Launcher
 		Files.copy(in, Paths.get(LOCAL_VERSION_NAME), StandardCopyOption.REPLACE_EXISTING);
 
 		return Paths.get(LOCAL_VERSION_NAME).toFile();
-	}
-
-
-	private static boolean launchGame()
-	{
-		try
-		{
-
-			return true;
-		}
-		catch (Exception e)
-		{
-			return false;
-		}
 	}
 }

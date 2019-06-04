@@ -19,7 +19,22 @@ public class TetrisServer extends NetworkAdapter
 {
 	public static void main(String[] args)
 	{
-		Engine.init(new TetrisConfig(true));
+		TetrisConfig config = new TetrisConfig(true);
+		String[][] launcherData;
+
+		try
+		{
+			launcherData = Launcher.getLauncherMetaData();
+			config.TCP_PORT = Integer.parseInt(launcherData[1][1]);
+			config.UDP_PORT = Integer.parseInt(launcherData[2][1]);
+			config.PLAYERS_TO_START = Integer.parseInt(launcherData[5][1]);
+		}
+		catch (Exception e)
+		{
+			System.err.println("Could not fetch launcher metadata. Using default values instead.");
+		}
+
+		Engine.init(config);
 		Engine.initNetwork();
 		new TetrisServer();
 	}
@@ -27,22 +42,12 @@ public class TetrisServer extends NetworkAdapter
 
 	private HashMap<Integer, NetBoard> boards;
 
-	private int playersToStart = 2;
 	private boolean gameStarted = false;
 
 
 	public TetrisServer()
 	{
 		boards = new HashMap<>();
-
-		try
-		{
-			playersToStart = Integer.parseInt(Launcher.getLauncherMetaData()[3]);
-		}
-		catch (Exception e)
-		{
-			System.err.println("Could not determine the required number of players to start... Using the default \"" + playersToStart + "\"");
-		}
 	}
 
 
@@ -152,7 +157,7 @@ public class TetrisServer extends NetworkAdapter
 		/** START GAME **/
 		if (!gameStarted)
 		{
-			if (boards.values().size() >= playersToStart)
+			if (boards.values().size() >= ((TetrisConfig)Engine.config()).PLAYERS_TO_START)
 			{
 				gameStarted = true;
 

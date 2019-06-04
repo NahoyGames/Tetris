@@ -22,15 +22,22 @@ public class TetrisClient extends NetworkAdapter
 {
 	public static void main(String[] args)
 	{
-		if (args.length != 2)
+		// java -jar JAR_PATH SERVER_IP TCP UDP USERNAME
+		if (args.length != 4)
 		{
 			Engine.init(new TetrisConfig(false));
 		}
 		else
 		{
-			String username = args[1].replaceAll("[^a-zA-Z0-9]", "");
+			String username = args[3].replaceAll("[^a-zA-Z0-9]", "");
 			username = username.substring(0, username.length() >= 12 ? 12 : username.length()); // Trim username to 12 characters
-			Engine.init(new TetrisConfig(args[0], username));
+			Engine.init(new TetrisConfig(args[0], username)
+			{
+				{
+					TCP_PORT = Integer.parseInt(args[1]);
+					UDP_PORT = Integer.parseInt(args[2]);
+				}
+			});
 		}
 		new TetrisClient();
 		Engine.initNetwork();
