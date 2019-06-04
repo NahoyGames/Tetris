@@ -56,18 +56,26 @@ public class TetrisServer extends NetworkAdapter
 		if (packet instanceof LockCurrentShapePacket)
 		{
 			LockCurrentShapePacket lockPacket = (LockCurrentShapePacket)packet;
-			Shape shape = boards.get(lockPacket.connectionID).getCurrentShape();
+			NetBoard board = boards.get(lockPacket.connectionID);
+			Shape shape = board.getCurrentShape();
 
-			shape.setPosition(lockPacket.position(), true);
-			shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
+			Vec2 upOffset = Vec2.zero();
+			int rotationAmount = shape.getRotation() - lockPacket.rotation;
+			while (!shape.setRotationThenPosition(true, rotationAmount, lockPacket.position().add(upOffset), false))
+			{
+				upOffset = upOffset.add(Vec2.up().scale(-1));
+			}
+			//shape.setPosition(lockPacket.position().add(upOffset), false);
+			//shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
 			shape.lock();
 
 			// Forward the message
-			netManager.sendReliableExcept(sender.getID(), packet);
+			//netManager.sendReliableExcept(sender.getID(), packet);
+			netManager.sendReliable(board.serializeToPacket());
 
 			// Queue in another shape to replace
 			// This is done every time, rather dumbly, but it doesn't hurt the program so why bother
-			boards.get(lockPacket.connectionID).setNextShape();
+			board.setNextShape();
 			this.queueShapeForEveryone();
 		}
 	}

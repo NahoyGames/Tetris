@@ -15,6 +15,9 @@ public class Grid
 	}
 
 
+	public static final Color RECEIVED_LINE_COLOR = Color.DARK_GRAY;
+
+
 	private Block[][] grid;
 	private int width, height;
 
@@ -140,7 +143,7 @@ public class Grid
 
 		for (int x = 0; x < this.width; x++)
 		{
-			this.setBlockAt(x, this.height() - 1, true, Color.DARK_GRAY);
+			this.setBlockAt(x, this.height() - 1, true, RECEIVED_LINE_COLOR);
 		}
 	}
 

@@ -127,7 +127,7 @@ public class Shape
 
 	public boolean move(Vec2 dir)
 	{
-		if (canMove(dir))
+		if (canMove(this.position.add(dir)))
 		{
 			position = position.add(dir);
 			return true;
@@ -137,11 +137,11 @@ public class Shape
 	}
 
 
-	public boolean canMove(Vec2 dir)
+	private boolean canMove(Vec2 position, Vec2[] points)
 	{
 		for (Vec2 p : points)
 		{
-			Vec2 inGrid = p.add(position).add(dir);
+			Vec2 inGrid = p.add(position);
 
 			if (inGrid.y < 0)
 			{
@@ -158,6 +158,12 @@ public class Shape
 	}
 
 
+	public boolean canMove(Vec2 position)
+	{
+		return this.canMove(position, this.points);
+	}
+
+
 	public boolean rotate(boolean clockwise)
 	{
 		return rotate(clockwise, 1, false);
@@ -165,6 +171,30 @@ public class Shape
 
 
 	public boolean rotate(boolean clockwise, int amount, boolean overrideLogic)
+	{
+		amount = Math.abs(amount);
+
+		Vec2[] rotatedPoints = getPointsRotated(clockwise, amount);
+
+
+		for (Vec2 p : rotatedPoints)
+		{
+			Vec2 inGrid;
+			inGrid = p.add(position);
+
+			if ((inGrid.x >= grid.width() || inGrid.x < 0 || inGrid.y >= grid.height() || grid.hasBlockAt(inGrid.x, inGrid.y)) && !overrideLogic)
+			{
+				return false;
+			}
+		}
+
+		points = rotatedPoints;
+		rotation = (rotation + (clockwise ? amount : -amount)) % 4;
+		return true;
+	}
+
+
+	private Vec2[] getPointsRotated(boolean clockwise, int amount)
 	{
 		amount = Math.abs(amount);
 
@@ -176,7 +206,6 @@ public class Shape
 			for (Vec2 p : newPoints)
 			{
 				Vec2 rotated;
-				Vec2 inGrid;
 				if (clockwise)
 				{
 					rotated = new Vec2(-p.y, p.x);
@@ -184,20 +213,11 @@ public class Shape
 				{
 					rotated = new Vec2(p.y, -p.x);
 				}
-				inGrid = rotated.add(position);
-
-				if ((inGrid.x >= grid.width() || inGrid.x < 0 || inGrid.y >= grid.height() || grid.hasBlockAt(inGrid.x, inGrid.y)) && !overrideLogic)
-				{
-					return false;
-				}
-
 				newPoints[i++] = rotated;
 			}
 		}
 
-		points = newPoints;
-		rotation = (rotation + (clockwise ? amount : -amount)) % 4;
-		return true;
+		return newPoints;
 	}
 
 
@@ -217,23 +237,28 @@ public class Shape
 
 	public boolean setPosition(Vec2 position, boolean overrideLogic)
 	{
-		if (overrideLogic)
+		if (overrideLogic || canMove(position))
 		{
 			this.position = position.clone();
 			return true;
 		}
 
-		Vec2 dir = position.subtract(this.position);
+		return false;
+	}
 
-		while (!position.equals(this.position))
+
+	public boolean setRotationThenPosition(boolean clockwise, int rotationAmount, Vec2 position, boolean overrideLogic)
+	{
+		Vec2[] pointsRotated = getPointsRotated(clockwise, rotationAmount);
+		if (overrideLogic || canMove(position, pointsRotated))
 		{
-			if (!move(dir))
-			{
-				return false;
-			}
+			this.position = position.clone();
+			this.points = pointsRotated;
+			this.rotation = (rotation + (clockwise ? rotationAmount : -rotationAmount)) % 4;
+			return true;
 		}
 
-		return true;
+		return false;
 	}
 
 

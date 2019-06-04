@@ -53,10 +53,13 @@ public class TetrisConfig extends EngineConfig
 
 		/** REGISTER PACKETS HERE **/
 		REGISTERED_PACKETS.add(int[].class);
+		REGISTERED_PACKETS.add(boolean[].class);
+		REGISTERED_PACKETS.add(boolean[][].class);
 		REGISTERED_PACKETS.add(String[].class);
 		REGISTERED_PACKETS.add(GameStatePacket.class);
 		REGISTERED_PACKETS.add(LockCurrentShapePacket.class);
 		REGISTERED_PACKETS.add(QueueShapePacket.class);
 		REGISTERED_PACKETS.add(PlayerWonPacket.class);
+		REGISTERED_PACKETS.add(NetBoardPacket.class);
 	}
 }

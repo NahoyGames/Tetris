@@ -55,21 +55,27 @@ public class Engine
 		if (!config.HEADLESS_MODE)
 		{
 			canvas = new Canvas(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, config.WINDOW_NAME);
-			canvas.getFrame().addWindowListener(new WindowAdapter()
-			{
-				@Override
-				public void windowClosing(WindowEvent ev)
-				{
-					super.windowClosing(ev);
 
+			new Input();
+		}
+
+		// OnApplicationQuit Callback
+		Runtime.getRuntime().addShutdownHook(new Thread()
+		{
+			@Override
+			public void run()
+			{
+				super.run();
+
+				if (isPlaying)
+				{
 					for (IEngineEventListener e : eventListeners)
 					{
 						e.onApplicationQuit();
 					}
 				}
-			});
-			new Input();
-		}
+			}
+		});
 
 		// Game Loop
 		Time.step();
@@ -77,12 +83,6 @@ public class Engine
 		{
 			if (!isPlaying)
 			{
-				for (IEngineEventListener e : eventListeners)
-				{
-					e.onApplicationQuit();
-				}
-
-				System.exit(0);
 				return;
 			}
 
@@ -167,6 +167,8 @@ public class Engine
 		{
 			e.onApplicationQuit();
 		}
+
+		isPlaying = false;
 
 		System.exit(0);
 	}

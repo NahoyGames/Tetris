@@ -28,7 +28,9 @@ public class TetrisClient extends NetworkAdapter
 		}
 		else
 		{
-			Engine.init(new TetrisConfig(args[0], args[1]));
+			String username = args[1].replaceAll("[^a-zA-Z0-9]", "");
+			username = username.substring(0, username.length() >= 12 ? 12 : username.length()); // Trim username to 12 characters
+			Engine.init(new TetrisConfig(args[0], username));
 		}
 		new TetrisClient();
 		Engine.initNetwork();
@@ -72,16 +74,22 @@ public class TetrisClient extends NetworkAdapter
 				boards.put(c, new NetBoard(statePacket.usernames[i++], c));
 			}
 		}
-		else if (packet instanceof LockCurrentShapePacket)
+//		else if (packet instanceof LockCurrentShapePacket)
+//		{
+//			LockCurrentShapePacket lockPacket = (LockCurrentShapePacket)packet;
+//			Shape shape = boards.get(lockPacket.connectionID).getCurrentShape();
+//
+//			shape.setPosition(lockPacket.position(), true);
+//			shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
+//			shape.lock();
+//
+//			boards.get(lockPacket.connectionID).setNextShape();
+//		}
+		else if (packet instanceof NetBoardPacket)
 		{
-			LockCurrentShapePacket lockPacket = (LockCurrentShapePacket)packet;
-			Shape shape = boards.get(lockPacket.connectionID).getCurrentShape();
+			NetBoardPacket boardPacket = (NetBoardPacket)packet;
 
-			shape.setPosition(lockPacket.position(), true);
-			shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
-			shape.lock();
-
-			boards.get(lockPacket.connectionID).setNextShape();
+			boards.get(boardPacket.connectionID).deserializePacket(boardPacket);
 		}
 		else if (packet instanceof QueueShapePacket)
 		{
@@ -194,6 +202,7 @@ public class TetrisClient extends NetworkAdapter
 
 		ClientNetManager netManager = ((ClientNetManager)Engine.network());
 
+		/** NULL CHECK **/
 		if (myBoard == null)
 		{
 			System.out.println("My board is null");
@@ -205,7 +214,12 @@ public class TetrisClient extends NetworkAdapter
 		}
 		if (myBoard.getCurrentShape() == null)
 		{
-			return;
+			System.out.println("My shape is null");
+
+			if (myBoard.setNextShape() == null)
+			{
+				return;
+			}
 		}
 
 		/** INPUT & ROTATION **/

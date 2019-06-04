@@ -43,7 +43,7 @@ public class Board
 
 	public Shape setNextShape()
 	{
-		return (this.currentShape = shapeQueue.remove());
+		return (this.currentShape = shapeQueue.poll());
 	}
 
 
