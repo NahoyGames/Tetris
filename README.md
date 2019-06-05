@@ -23,8 +23,14 @@ A quick tour:
 ## Server Launch Instructions
 1. Download the [server build](https://drive.google.com/file/d/1tcFedEeP6zy6TAttyz_8US-h_A9OlH2Q/view?usp=sharing).
 1. Configure the IP Address in the [master server configuration sheet](https://docs.google.com/spreadsheets/d/1lC6AnZgw4LGute_icCiwuRZVOLTbTUJC7ckkOgK6MXU/edit?usp=sharing).
-  1. If you're denied access from this document, it's most likely because you're a stranger reading this :P
-  1. Instead of using the launcher, run the [latest client build](https://drive.google.com/file/d/1dJVABfomO4DkOfosGu4L_yK3B_s-UZmm/view?usp=sharing) directly with arguments:
+  * Discover your IP address using services such as [https://whatsmyip.com/](whatsmyip.com). "localhost" or "127.0.0.1" also works when running locally. I recommend running on LAN with friends unless you're familiar with NAT punchthrough(The game uses TCP and UDP.
+  * If you're denied access from this document, it's most likely because you're a stranger reading this :P
+  * Instead of using the launcher, run the [latest client build](https://drive.google.com/file/d/1dJVABfomO4DkOfosGu4L_yK3B_s-UZmm/view?usp=sharing) directly with arguments:
   > java -jar LATEST_CLIENT_BUILD_PATH serverIP tcpPort udpPort username
 1. Configure the maximum number of players in that same configuration document. The server automatically starts the game once that number is reached
 1. Double click the downloaded server build and connect clients!
+
+## Dependencies & Credits
+* [Java Development Kit](https://jdk.java.net/)
+* [Kryonet](https://github.com/EsotericSoftware/kryonet)
+* Everything else made by me.
