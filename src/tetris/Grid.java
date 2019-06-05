@@ -75,9 +75,9 @@ public class Grid
 		buffer.setColor(new Color(0x626D75));
 		buffer.fillRect(0, 0, this.width() * blockSize, this.height() * blockSize);
 
-		for (int x = 0; x < this.width(); x++)
+		for (int y = 0; y < this.height(); y++)
 		{
-			for (int y = 0; y < this.height(); y++)
+			for (int x = 0; x < this.width(); x++)
 			{
 				//buffer.setColor(new Color(105, 116, 136));
 				//buffer.drawRect(x * blockSize, y * blockSize, blockSize, blockSize);
@@ -131,7 +131,7 @@ public class Grid
 	}
 
 
-	public void addLine()
+	public void addLine(int hole)
 	{
 		for (int y = 0; y < this.height() - 1; y++)
 		{
@@ -143,6 +143,11 @@ public class Grid
 
 		for (int x = 0; x < this.width; x++)
 		{
+			if (x == hole)
+			{
+				this.setBlockAt(x, this.height() - 1, false, null);
+				continue;
+			}
 			this.setBlockAt(x, this.height() - 1, true, RECEIVED_LINE_COLOR);
 		}
 	}
@@ -153,6 +158,9 @@ public class Grid
 
 
 	public boolean hasLost() { return hasLost; }
+
+
+	public boolean setHasLost(boolean value) { return this.hasLost = value; }
 
 
 	public int blockSize()

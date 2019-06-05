@@ -31,12 +31,13 @@ public class NetBoard extends Board
 	{
 		this.grid().clearLine(y);
 		this.linesCleared++;
+		this.linesReceived = Math.max(0, linesReceived - 1);
 	}
 
 
-	public void addLine()
+	public void addLine(int hole)
 	{
-		this.grid().addLine();
+		this.grid().addLine(hole);
 		this.linesReceived++;
 	}
 
@@ -63,6 +64,9 @@ public class NetBoard extends Board
 		// Lines Received
 		packet.linesReceived = this.linesReceived;
 
+		// Has Lost
+		packet.hasLost = this.hasLost();
+
 		// Grid(blocks which are on/off) & Colors
 		boolean[][] grid = new boolean[this.grid().height() - this.linesReceived][this.grid().width()];
 		List<Integer> colors = new ArrayList<>();
@@ -78,6 +82,22 @@ public class NetBoard extends Board
 			}
 		}
 		packet.grid = grid;
+
+		// Holes
+		byte[] holes = new byte[linesReceived];
+		int i = 0;
+		for (int y = grid.length; y < this.grid().height(); y++)
+		{
+			for (int x = 0; x < this.grid().width(); x++)
+			{
+				if (!this.grid().hasBlockAt(x, y))
+				{
+					holes[i++] = (byte)x;
+					break;
+				}
+			}
+		}
+		packet.holes = holes;
 
 		// Colors
 		packet.colors = ArrayUtil.toArray(colors);
@@ -95,15 +115,29 @@ public class NetBoard extends Board
 			return;
 		}
 
-		// Lines Received
+		// Lines Received & Holes
 		this.linesReceived = packet.linesReceived;
+		int i = 0;
 		for (int y = this.grid().height() - linesReceived; y < this.grid().height(); y++)
 		{
+			boolean hadHole = false;
 			for (int x = 0; x < this.grid().width(); x++)
 			{
-				this.grid().setBlockAt(x, y, true, Grid.RECEIVED_LINE_COLOR);
+				if (!hadHole && (int)packet.holes[i] == x)
+				{
+					this.grid().setBlockAt(x, y, false, null);
+					hadHole = true;
+					i++;
+				}
+				else
+				{
+					this.grid().setBlockAt(x, y, true, Grid.RECEIVED_LINE_COLOR);
+				}
 			}
 		}
+
+		// Has Lost
+		this.grid().setHasLost(packet.hasLost);
 
 		// Grid & Color
 		int colorIndex = 0;

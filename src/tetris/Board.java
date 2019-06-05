@@ -1,6 +1,7 @@
 package tetris;
 
 
+import util.StringUtil;
 import util.engine.Engine;
 import util.math.Vec2;
 
@@ -69,9 +70,22 @@ public class Board
 					break;
 				}
 
+				// Background
 				buffer.setColor(new Color(0x354155));
 				buffer.fillRect(offset.x, offset.y, width, width);
+
+				// Shape
 				shape.drawCentered(buffer, blockSize, 1, new Vec2(blockSize * 2, blockSize * 2).add(offset));
+
+				// Text
+				buffer.setColor(new Color(0xB2C6C7));
+				StringUtil.drawCentered(
+						buffer,
+						"next",
+						((TetrisConfig)Engine.config()).TETRIS_FONT,
+						new Vec2(width / 2, width + 5).add(offset),
+						width * 0.8f
+				);
 
 				buffer.translate(0, width + 20);
 			}

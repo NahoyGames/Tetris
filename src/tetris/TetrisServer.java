@@ -70,12 +70,9 @@ public class TetrisServer extends NetworkAdapter
 			{
 				upOffset = upOffset.add(Vec2.up().scale(-1));
 			}
-			//shape.setPosition(lockPacket.position().add(upOffset), false);
-			//shape.rotate(true, shape.getRotation() - lockPacket.rotation, true);
 			shape.lock();
 
 			// Forward the message
-			//netManager.sendReliableExcept(sender.getID(), packet);
 			netManager.sendReliable(board.serializeToPacket());
 
 			// Queue in another shape to replace
@@ -178,23 +175,37 @@ public class TetrisServer extends NetworkAdapter
 		}
 
 		/** CLEAR LINES **/
+		boolean hadClear = false;
 		for (NetBoard board : boards.values())
 		{
-			for (int y = 0; y < board.grid().height() - board.getLinesReceived(); y++)
+			for (int y = 0; y < board.grid().height(); y++) // - board.getLinesReceived()
 			{
 				if (board.grid().hasFullLine(y))
 				{
+					boolean shouldAddLine = y < board.grid().height() - board.getLinesReceived();
 					board.clearLine(y);
+					hadClear = true;
 
-					// Add a line to everyone else
-					for (NetBoard b : boards.values())
+					if (shouldAddLine)
 					{
-						if (b != board && !b.hasLost())
+						// Add a line to everyone else
+						float hole = (float) Math.random();
+						for (NetBoard b : boards.values())
 						{
-							b.addLine();
+							if (b != board && !b.hasLost())
+							{
+								b.addLine((int) (b.grid().width() * hole));
+							}
 						}
 					}
 				}
+			}
+		}
+		if (hadClear)
+		{
+			for (NetBoard board : boards.values())
+			{
+				((ServerNetManager)Engine.network()).sendReliable(board.serializeToPacket());
 			}
 		}
 

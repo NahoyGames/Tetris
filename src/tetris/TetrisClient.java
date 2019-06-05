@@ -3,6 +3,7 @@ package tetris;
 
 import com.esotericsoftware.kryonet.Connection;
 import tetris.packets.*;
+import util.StringUtil;
 import util.engine.Engine;
 import util.engine.Input;
 import util.engine.Time;
@@ -46,7 +47,7 @@ public class TetrisClient extends NetworkAdapter
 	private HashMap<Integer, NetBoard> boards;
 	private NetBoard myBoard;
 
-	private float gravitySpeed, gravitySpeedTimer, shapeLockTimer, movementTimer;
+	private float gravitySpeed, gravitySpeedTimer, shapeLockTimer, shapeLockAbsoluteTimer, movementTimer;
 	private Vec2 dir;
 
 	private boolean gameStarted = false;
@@ -56,7 +57,7 @@ public class TetrisClient extends NetworkAdapter
 	{
 		boards = new HashMap<>();
 		dir = Vec2.zero();
-		gravitySpeed = 0.5f;
+		gravitySpeed = 1f;
 	}
 
 
@@ -144,7 +145,8 @@ public class TetrisClient extends NetworkAdapter
 			myBoard.grid().draw(buffer);
 			if (myBoard.getCurrentShape() != null && !myBoard.hasLost())
 			{
-				myBoard.getCurrentShape().draw(buffer, shapeLockTimer / ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME);
+				float lerp = (float)Math.cos(shapeLockTimer * (Math.PI * 2 / ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME)); // Blinks over one cycle of cosine
+				myBoard.getCurrentShape().draw(buffer, lerp * lerp);
 			}
 
 			buffer.translate(myBoard.grid().width() * myBoard.grid().blockSize() + 40, 0);
@@ -160,12 +162,14 @@ public class TetrisClient extends NetworkAdapter
 
 			// Username
 			buffer.setColor(new Color(0xB2C6C7));
-			buffer.setFont(((TetrisConfig)Engine.config()).TETRIS_FONT);
-
-			FontMetrics metrics = buffer.getFontMetrics(((TetrisConfig)Engine.config()).TETRIS_FONT);
-			String string = board.getUsername().toUpperCase();
-
-			buffer.drawString(string, ((board.grid().width() * board.grid().blockSize()) - metrics.stringWidth(string)) / 2, board.grid().height() * board.grid().blockSize() + metrics.getHeight());
+			int width = board.grid().width() * board.grid().blockSize();
+			StringUtil.drawCentered(
+					buffer,
+					board.getUsername().toUpperCase(),
+					((TetrisConfig)Engine.config()).TETRIS_FONT,
+					new Vec2(width / 2, board.grid().height() * board.grid().blockSize() + 10),
+					width
+			);
 
 			buffer.translate(board.grid().width() * board.grid().blockSize() + 40, 0);
 		}
@@ -177,19 +181,20 @@ public class TetrisClient extends NetworkAdapter
 			buffer.setColor(new Color(18, 18, 18, 190));
 			buffer.fillRect(0,0, Engine.canvas().getCurrentWidth(), Engine.canvas().getCurrentHeight());
 
-			Font font;
+			//Font font;
 			buffer.setColor(new Color(0xF1E7F1));
-
-			buffer.setFont(font = ((TetrisConfig)Engine.config()).TETRIS_FONT.deriveFont(30f));
-			FontMetrics metrics = buffer.getFontMetrics(font);
-			String string = "Waiting    for    players";
-			buffer.drawString(string, (Engine.canvas().getCurrentWidth() - metrics.stringWidth(string)) / 2, (Engine.canvas().getCurrentHeight() + metrics.getHeight()) / 2);
-
-			buffer.setFont(font = ((TetrisConfig)Engine.config()).TETRIS_FONT.deriveFont(15f));
-			metrics = buffer.getFontMetrics(font);
-			string = "The    game    will    start    shortly";
-			buffer.drawString(string, (Engine.canvas().getCurrentWidth() - metrics.stringWidth(string)) / 2, (Engine.canvas().getCurrentHeight() + metrics.getHeight()) / 2 + 50);
-
+			StringUtil.drawCentered(
+					buffer,
+					"Waiting    for    players",
+					((TetrisConfig)Engine.config()).TETRIS_FONT.deriveFont(30f),
+					new Vec2(Engine.canvas().getCurrentWidth() / 2, Engine.canvas().getCurrentHeight() / 2)
+			);
+			StringUtil.drawCentered(
+					buffer,
+					"The    game    will    start    shortly",
+					((TetrisConfig)Engine.config()).TETRIS_FONT.deriveFont(15f),
+					new Vec2(Engine.canvas().getCurrentWidth() / 2, Engine.canvas().getCurrentHeight() / 2 + 40)
+			);
 		}
 	}
 
@@ -221,12 +226,12 @@ public class TetrisClient extends NetworkAdapter
 		}
 		if (myBoard.getCurrentShape() == null)
 		{
-			System.out.println("My shape is null");
+			System.out.println("My shape is null and queue has elements# " + myBoard.getQueueSize());
 
-			if (myBoard.setNextShape() == null)
-			{
+			//if (myBoard.setNextShape() == null)
+			//{
 				return;
-			}
+			//}
 		}
 
 		/** INPUT & ROTATION **/
@@ -260,6 +265,10 @@ public class TetrisClient extends NetworkAdapter
 			}
 			movementTimer = 0f;
 		}
+		else if (movementTimer % (((TetrisConfig)Engine.config()).SHAPE_MOVEMENT_SPEED  / 3) > 0f && this.dir.y > 0) // Downwards movement
+		{
+			myBoard.getCurrentShape().move(Vec2.up());
+		}
 
 		/** GRAVITY **/
 		gravitySpeedTimer += Time.deltaTime(true);
@@ -267,49 +276,25 @@ public class TetrisClient extends NetworkAdapter
 		{
 			if (myBoard.getCurrentShape().move(Vec2.up())) // Was able to fall
 			{
-				gravitySpeedTimer = shapeLockTimer = 0f;
+				gravitySpeedTimer = shapeLockTimer = shapeLockAbsoluteTimer = 0f;
 			}
 			else
 			{
 				shapeLockTimer += Time.deltaTime(true); // Else, start locking shape
+				shapeLockAbsoluteTimer += Time.deltaTime(true);
 			}
 		}
 
 		/** SHAPE LOCK & NETWORKING **/
-		if (shapeLockTimer >= ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME)
+		if (shapeLockTimer >= ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME ||
+			shapeLockAbsoluteTimer >= ((TetrisConfig)Engine.config()).SHAPE_LOCK_TIME * 2)
 		{
 			myBoard.getCurrentShape().lock(); // Lock locally
 
 			netManager.sendReliable(new LockCurrentShapePacket(netManager.id(), myBoard.getCurrentShape())); // Notify server
 
 			myBoard.setNextShape(); // Next shape
-		}
-
-		/** CLEAR LINES **/
-		for (NetBoard board : boards.values())
-		{
-			for (int y = 0; y < board.grid().height() - board.getLinesReceived(); y++)
-			{
-				if (board.grid().hasFullLine(y))
-				{
-					board.clearLine(y);
-					if (board == myBoard) { this.gravitySpeed *= 0.9f; } // Increase gravity and make the game harder
-
-					// Add a line to everyone else
-					for (NetBoard b : boards.values())
-					{
-						if (b != board && !b.hasLost())
-						{
-							b.addLine();
-
-							if (b == myBoard)
-							{
-								b.getCurrentShape().setPosition(b.getCurrentShape().getPosition().subtract(Vec2.up()), true);
-							}
-						}
-					}
-				}
-			}
+			shapeLockTimer = shapeLockAbsoluteTimer = 0f;
 		}
 	}
 }

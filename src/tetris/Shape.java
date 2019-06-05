@@ -74,10 +74,23 @@ public class Shape
 
 	public void draw(Graphics2D buffer, int blockSize, float lerp, Vec2 offset)
 	{
+		// Draw Shape
 		buffer.setColor(ColorUtil.lerp(color, Color.WHITE, lerp));
 		for (Vec2 p : points)
 		{
 			buffer.fillRect((p.x + position.x) * blockSize + offset.x, (p.y + position.y) * blockSize + offset.y, blockSize, blockSize);
+		}
+
+		// Draw Prediction
+		buffer.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 50));
+		Vec2 farthestDown = this.getPosition().clone();
+		while (canMove(farthestDown))
+		{
+			farthestDown = farthestDown.add(Vec2.up());
+		}
+		for (Vec2 p : points)
+		{
+			buffer.fillRect((p.x + farthestDown.x) * blockSize + offset.x, (p.y + (farthestDown.y - 1)) * blockSize + offset.y, blockSize, blockSize);
 		}
 	}
 

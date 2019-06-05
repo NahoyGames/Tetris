@@ -13,8 +13,8 @@ public class TetrisConfig extends EngineConfig
 	public int PLAYERS_TO_START = 2;
 
 	public float SHAPE_LOCK_TIME = 0.75f;
-	public float SHAPE_MOVEMENT_SPEED = 10; // Moves per second
-	public int SHAPE_QUEUE_SIZE = 5;
+	public float SHAPE_MOVEMENT_SPEED = 15; // Moves per second
+	public int SHAPE_QUEUE_SIZE = 1;
 	public Font TETRIS_FONT;
 
 
@@ -57,6 +57,7 @@ public class TetrisConfig extends EngineConfig
 		REGISTERED_PACKETS.add(int[].class);
 		REGISTERED_PACKETS.add(boolean[].class);
 		REGISTERED_PACKETS.add(boolean[][].class);
+		REGISTERED_PACKETS.add(byte[].class);
 		REGISTERED_PACKETS.add(String[].class);
 		REGISTERED_PACKETS.add(GameStatePacket.class);
 		REGISTERED_PACKETS.add(LockCurrentShapePacket.class);
