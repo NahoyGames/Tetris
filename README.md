@@ -2,7 +2,7 @@
 An online multiplayer implementation of the classis Tetris. Made for my AP Computer Science Class.
 
 ## Gameplay
-![Gameplay Screenshot](https://i.imgur.com/8sTNwyE.png)
+![Gameplay Screenshot](https://i.imgur.com/Udo71cy.png)
 The game is simple and familiar; it's classical Tetris except cleared lines are sent over to other players, making their odds of losing greater.
 Rather than accumulating points as in normal Tetris, the goal is to survive longer than the other players.
 
